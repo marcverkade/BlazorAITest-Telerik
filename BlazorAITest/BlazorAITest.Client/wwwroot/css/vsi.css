@@ -1,0 +1,15 @@
+﻿/* Buttons */
+.vsi-btn
+{
+    margin-right: 3px;
+    margin-bottom: 3px;
+    color: #fff !important;
+    padding: 0.30rem 0.5rem !important;
+    font-weight: 400 !important;
+    line-height: 1.2 !important;
+}
+
+.vsi-hidden
+{
+    display: none!important;
+}

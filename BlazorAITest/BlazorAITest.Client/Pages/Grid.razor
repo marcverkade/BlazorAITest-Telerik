@@ -1,0 +1,144 @@
+﻿@page "/grid"
+@rendermode InteractiveAuto
+@using Telerik.Blazor
+@using Telerik.Blazor.Components
+@using BlazorAITest.Client.Components
+@using Telerik.FontIcons
+@using VSI.Enums
+@using VSI.Services
+@layout MainLayout
+
+<PageTitle>Custom Telerik Grid with navigation</PageTitle>
+
+<h1>Custom Telerik Grid with navigation</h1>
+
+<p>Use the arrowkeys and [ENTER] to select</p>
+
+@* Default TelerikGrid example from the dox
+    <TelerikGrid Data="@TestData" Pageable="true" FilterMode="Telerik.Blazor.GridFilterMode.FilterRow" Height="400px">
+    <GridColumns>
+        <GridColumn Field="Id" Title="ID" />
+        <GridColumn Field="Name" Title="Name" />
+        <GridColumn Field="Age" Title="Age" />
+        <GridColumn Field="Email" Title="Email" />
+    </GridColumns>
+</TelerikGrid>
+*@
+
+     <TelerikGridWithNavigation
+        TItem="Person"
+        @ref="TheGrid"
+        GridTitle="Person List"
+        EnableLoaderContainer="true"
+        FilterMode="Telerik.Blazor.GridFilterMode.FilterRow"
+        OnRowDoubleClick="@OnRowDoubleClickHandler"
+        Class="grid vsi-grid"
+        Data="@TestData"
+        @bind-SelectedItems="@SelectedItems"
+        ConfirmDelete="true"
+        Pageable="true"
+        Groupable="true"
+        Sortable="true"
+        Resizable="true"
+        Reorderable="true"
+        SelectionMode="GridSelectionMode.Single"
+        PageSize="@PageSize"
+        Navigable="true">
+
+        <GridSettings>
+            <GridPagerSettings InputType="PagerInputType.Input"
+                                PageSizes="@PageSizes"
+                                ButtonCount="5"
+                                Adaptive="true"
+                                Position="PagerPosition.Bottom">
+            </GridPagerSettings>
+        </GridSettings>
+        <GridExport>
+            <GridExcelExport FileName="ExcelExport" AllPages="true" />
+        </GridExport>
+        <GridColumns>
+            <GridColumn Field="Id" Title="ID" />
+            <GridColumn Field="Name" Title="Name" />
+            <GridColumn Field="Age" Title="Age" />
+            <GridColumn Field="Email" Title="Email" />
+
+            <GridCommandColumn Width="200px">
+                <GridCommandButton Command="MyOwnCommand" Class="btn btn-sm vsi-inprogress btn-primary vsi-btn vsi-btn-no-text-on-mobile" OnClick="@EditOnClickHandler" Icon="@FontIcon.Pencil" ThemeColor="@ThemeConstants.Button.ThemeColor.Info">Edit</GridCommandButton>
+                <GridCommandButton Command="MyOwnCommand" Class="btn btn-sm vsi-inprogress btn-danger vsi-btn vsi-btn-no-text-on-mobile" OnClick="@DeleteOnClickHandler" Icon="@FontIcon.Trash" ThemeColor="@ThemeConstants.Button.ThemeColor.Error">Delete</GridCommandButton>
+            </GridCommandColumn>
+        </GridColumns>
+    </TelerikGridWithNavigation> 
+
+@code {
+
+    // Injected the message service for toast notifications
+    [Inject] public ToastService? ToastMessage { get; set; }
+
+    // Grid variables
+    private TelerikGridWithNavigation<Person>? TheGrid { get; set; }
+    private IList<Person> SelectedItems { get; set; } = new List<Person>();
+    int PageSize { get; set; } = 25;
+    protected List<int?> PageSizes { get; set; } = new List<int?> { 25, 50, 100, null };
+
+    /// <summary>
+    /// Handles the double click and the [ENTER] key press on a row in the grid.
+    /// </summary>
+    /// <param name="args"></param>
+    void OnRowDoubleClickHandler(GridRowClickEventArgs args)
+    {
+        // You can get the item from the args or use SelectedItems to handle all selected rows
+        Person? person = args.Item as Person;
+        if (person != null)
+        {
+            ToastMessage!.ShowToast($"Double-clicked on {person.Name}", ToastLevel.Info);
+        }
+    }
+
+    /// <summary>
+    /// Handle the Edit button of the GridCommandButton.
+    /// </summary>
+    /// <param name="args"></param>
+    public void EditOnClickHandler(GridCommandEventArgs args)
+    {
+        Person? person = args.Item as Person;
+        if (person != null)
+        {
+            ToastMessage!.ShowToast($"Edit clicked on {person.Name}", ToastLevel.Info);
+        }
+    }
+
+    /// <summary>
+    /// Handle the Delete button of the GridCommandButton.
+    /// </summary>
+    /// <param name="args"></param>
+    public void DeleteOnClickHandler(GridCommandEventArgs args)
+    {
+        Person? person = args.Item as Person;
+        if (person != null)
+        {
+            ToastMessage!.ShowToast($"Delete clicked on {person.Name}", ToastLevel.Info);
+        }
+    }
+
+    /// <summary>
+    /// Testdata for the grid.
+    /// </summary>
+    public class Person
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
+        public string Email { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Testdata for the grid.
+    /// </summary>
+    public List<Person> TestData { get; set; } = new()
+    {
+        new Person { Id = 1, Name = "Alice", Age = 30, Email = "alice@example.com" },
+        new Person { Id = 2, Name = "Bob", Age = 25, Email = "bob@example.com" },
+        new Person { Id = 3, Name = "Charlie", Age = 35, Email = "charlie@example.com" },
+        new Person { Id = 4, Name = "Diana", Age = 28, Email = "diana@example.com" }
+    };
+}

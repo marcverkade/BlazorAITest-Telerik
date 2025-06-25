@@ -1,0 +1,27 @@
+﻿@page "/"
+@using Telerik.Blazor
+@using Telerik.Blazor.Components
+
+<PageTitle>Home</PageTitle>
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<TelerikTextBox Placeholder="Enter text here..." @bind-Value="@textValue" />
+
+<CascadingValue Value="Dialogs">
+    <TelerikButton OnClick="ShowAlert">Show Alert with Text Value</TelerikButton>
+</CascadingValue>
+
+@code {
+
+    [CascadingParameter] DialogFactory? Dialogs { get; set; }
+
+    private string textValue = string.Empty;
+
+    private async Task ShowAlert()
+    {
+        await Dialogs!.AlertAsync(textValue);
+    }
+}

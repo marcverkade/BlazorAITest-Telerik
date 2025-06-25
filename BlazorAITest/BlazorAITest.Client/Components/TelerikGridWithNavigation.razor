@@ -1,0 +1,286 @@
+﻿@typeparam TItem
+@using Microsoft.AspNetCore.Components
+@using Telerik.Blazor
+@using Telerik.Blazor.Components
+@using Telerik.DataSource
+@using Telerik.DataSource.Extensions
+@using Telerik.SvgIcons
+@using VSI.Enums
+@using VSI.Services
+@inject NavigationManager Navigation
+@inject ToastService ToastMessage
+
+@* Added custom property of the TelerikGridWithNavigation *@
+@if (!string.IsNullOrEmpty(GridTitle))
+{
+    <h3>@GridTitle</h3>
+}
+
+@* Create 3 hidden buttons to catch the javascript keydown events *@
+<TelerikButton Id="btnSelect" OnClick="@Select" Icon="@SvgIcon.DownloadLight" Class="btn btn-primary vsi-btn vsi-hidden"><u>S</u>elect</TelerikButton>
+@* 
+    Or use this, but I prefer the javascript method for hotkeys so you can add ALT and CTRL too
+    <TelerikButton Id="btnSelect" OnClick="@Select" Icon="@SvgIcon.DownloadLight" Class="btn btn-primary vsi-btn vsi-hidden"><u>S</u>ave<span accesskey="S"></span></TelerikButton> 
+*@
+<TelerikButton Id="btnNext" OnClick="@Next" Icon="@SvgIcon.ArrowRight" Class="btn btn-primary vsi-btn vsi-hidden"><u>N</u>ext</TelerikButton>
+<TelerikButton Id="btnPrevious" OnClick="@Previous" Icon="@SvgIcon.ArrowLeft" Class="btn btn-primary vsi-btn vsi-hidden">Pre<u>v</u>ious</TelerikButton>
+
+@* Main TelerikGrid component *@
+<TelerikGrid TItem="TItem"
+             @ref="GridRef"
+             Data="@Data"
+             SelectedItems="@SelectedItems"
+             SelectedItemsChanged="@OnSelectedItemsChanged"
+             Pageable="@Pageable"
+             Groupable="@Groupable"
+             Sortable="@Sortable"
+             Size="@Size"
+             Resizable="@Resizable"
+             Reorderable="@Reorderable"
+             SelectionMode="@SelectionMode"
+             PageSize="@PageSize"
+             Navigable="@Navigable"
+             EnableLoaderContainer="@EnableLoaderContainer"
+             FilterMode="@FilterMode"
+             ConfirmDelete="@ConfirmDelete"
+             Class="@Class"
+             OnRowDoubleClick="@OnRowDoubleClick"
+             OnRead="@OnRead"
+             EditMode="@EditMode"
+             Height="@Height"
+             Width="@Width"
+             DetailTemplate="@DetailTemplate"
+             RowTemplate="@RowTemplate"
+             NoDataTemplate="@NoDataTemplate"
+             @attributes="AdditionalAttributes">
+
+    <GridToolBarTemplate>
+        @GridToolBarTemplate
+    </GridToolBarTemplate>
+    <GridExport>
+        @GridExport
+    </GridExport>
+    <GridSettings>
+        @GridSettings
+    </GridSettings>
+    <GridColumns>
+        @GridColumns
+    </GridColumns>
+</TelerikGrid>
+
+@* Add the javascript to register the keydown events of the grid *@
+<script>
+    document.addEventListener('keydown', (event) => {
+        if (!event.ctrlKey && !event.altKey && event.code === 'ArrowDown') {
+            const button = document.getElementById('btnNext');
+            if (button) {
+                console.log(`ArrowDown pressed: Select Next`);
+                button.click();
+            }
+        }
+        if (!event.ctrlKey && !event.altKey && event.code === 'ArrowUp') {
+            const button = document.getElementById('btnPrevious');
+            if (button) {
+                console.log(`ArrowUp pressed: Select Previous`);
+                button.click();
+            }
+        }
+        if (!event.ctrlKey && !event.altKey && event.code === 'Enter') {
+            const button = document.getElementById('btnSelect');
+            if (button) {
+                console.log(`ENTER pressed: Select`);
+                button.click();
+            }
+        }
+    });
+</script>
+
+@code 
+{
+    // Define the parameters for the grid, these are the actual properties of TelerikGrid 
+    [Parameter] public IEnumerable<TItem>? Data { get; set; }
+    [Parameter] public IList<TItem>? SelectedItems { get; set; } = new List<TItem>();
+    [Parameter] public EventCallback<IList<TItem>> SelectedItemsChanged { get; set; }
+    [Parameter] public bool Pageable { get; set; }
+    [Parameter] public bool Groupable { get; set; }
+    [Parameter] public bool Sortable { get; set; }
+    [Parameter] public bool Resizable { get; set; }
+    [Parameter] public bool Reorderable { get; set; }
+    [Parameter] public GridSelectionMode SelectionMode { get; set; }
+    [Parameter] public string? Size { get; set; }
+    [Parameter] public int PageSize { get; set; } = 20;
+    [Parameter] public bool Navigable { get; set; }
+    [Parameter] public bool EnableLoaderContainer { get; set; }
+    [Parameter] public GridFilterMode FilterMode { get; set; }
+    [Parameter] public bool ConfirmDelete { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public EventCallback<GridRowClickEventArgs> OnRowDoubleClick { get; set; }
+    [Parameter] public EventCallback<GridReadEventArgs> OnRead { get; set; }
+    [Parameter] public GridEditMode EditMode { get; set; }
+    [Parameter] public string? Height { get; set; }
+    [Parameter] public string? Width { get; set; }
+    [Parameter] public RenderFragment? GridSettings { get; set; }
+    [Parameter] public RenderFragment? GridToolBarTemplate { get; set; }
+    [Parameter] public RenderFragment? GridExport { get; set; }
+    [Parameter] public RenderFragment? GridColumns { get; set; }
+    [Parameter] public RenderFragment<TItem>? DetailTemplate { get; set; }
+    [Parameter] public RenderFragment<TItem>? RowTemplate { get; set; }
+    [Parameter] public RenderFragment? NoDataTemplate { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    // Extra added property
+    [Parameter] public string? GridTitle { get; set; }
+
+    // Grid variables
+    public TelerikGrid<TItem>? GridRef { get; set; }
+    private List<TItem> FilteredItems { get; set; } = new();
+
+    // Event handlers
+    private Task OnSelectedItemsChanged(object items)
+    {
+        if (items is IList<TItem> typed)
+        {
+            SelectedItems = typed;
+            return SelectedItemsChanged.InvokeAsync(typed);
+        }
+        return Task.CompletedTask;
+    }
+
+    // Button click handlers
+    private async Task Select()
+    {
+        if (SelectedItems?.Count > 0)
+        {
+            var selected = SelectedItems.FirstOrDefault();
+            if (selected != null)
+            {
+                var args = new GridRowClickEventArgs(selected, null, null);
+                await OnRowDoubleClick.InvokeAsync(args);
+                return;
+            }
+        }
+
+        ToastMessage.ShowToast("No item selected.", ToastLevel.Warning);
+    }
+
+    public void Next()
+    {
+        RefreshFilteredGridData();
+
+        if (FilteredItems.Count == 0)
+        {
+            ToastMessage.ShowToast("No data available.", ToastLevel.Warning);
+            return;
+        }
+
+        var current = (SelectedItems != null && SelectedItems.Count > 0)
+            ? SelectedItems[0]
+            : default;
+
+        int idx = current == null ? -1 : FilteredItems.FindIndex(item => IsSameItem(item, current));
+
+        int newIndex;
+
+        if (idx == -1)
+        {
+            // Selectie niet in gefilterde lijst → pak eerste
+            newIndex = 0;
+        }
+        else if (idx == FilteredItems.Count - 1)
+        {
+            // Laatste item → wrap naar eerste
+            newIndex = 0;
+        }
+        else
+        {
+            // Normale volgende
+            newIndex = idx + 1;
+        }
+
+        SelectedItems = new List<TItem> { FilteredItems[newIndex] };
+        SelectedItemsChanged.InvokeAsync(SelectedItems);
+    }
+
+    public void Previous()
+    {
+        RefreshFilteredGridData();
+
+        if (FilteredItems.Count == 0)
+        {
+            ToastMessage.ShowToast("No data available.", ToastLevel.Warning);
+            return;
+        }
+
+        var current = (SelectedItems != null && SelectedItems.Count > 0)
+            ? SelectedItems[0]
+            : default;
+
+        int idx = current == null ? -1 : FilteredItems.FindIndex(item => IsSameItem(item, current));
+
+        int newIndex;
+
+        if (idx == -1)
+        {
+            // No selection, go to the last record
+            newIndex = FilteredItems.Count - 1;
+        }
+        else if (idx == 0)
+        {
+            // First item is selected --> Goto the last item
+            newIndex = FilteredItems.Count - 1;
+        }
+        else
+        {
+            // Previous
+            newIndex = idx - 1;
+        }
+
+        SelectedItems = new List<TItem> { FilteredItems[newIndex] };
+        SelectedItemsChanged.InvokeAsync(SelectedItems);
+    }
+
+    // Filter routines so when a filter is applied, the next and previous buttons work correctly
+    private void RefreshFilteredGridData()
+    {
+        if (GridRef == null || Data == null)
+            return;
+
+        var state = GridRef.GetState();
+        var filters = new List<IFilterDescriptor>(state.FilterDescriptors ?? []);
+        if (state.SearchFilter != null)
+            filters.Add(state.SearchFilter);
+
+        var request = new DataSourceRequest
+        {
+            Filters = filters,
+            Groups = state.GroupDescriptors?.ToList() ?? [],
+            Page = state.Page ?? 1,
+            PageSize = PageSize,
+            Skip = state.Skip ?? 0,
+            Sorts = state.SortDescriptors?.ToList() ?? []
+        };
+
+        var result = Data.ToDataSourceResult(request);
+
+        FilteredItems = state.GroupDescriptors?.Any() == true
+            ? result.Data.Cast<AggregateFunctionsGroup>().SelectMany(g => g.Items.Cast<TItem>()).ToList()
+            : result.Data.Cast<TItem>().ToList();
+    }
+
+    // Match the ID property of the item to determine if two items are the same
+    private object? GetId(TItem item)
+    {
+        var prop = typeof(TItem).GetProperty("Id") ?? typeof(TItem).GetProperty("ID") ?? typeof(TItem).GetProperty("id");
+        return prop?.GetValue(item);
+    }
+
+    private bool IsSameItem(TItem a, TItem b)
+    {
+        var idA = GetId(a);
+        var idB = GetId(b);
+        return idA != null && idA.Equals(idB);
+    }
+
+}
+
+

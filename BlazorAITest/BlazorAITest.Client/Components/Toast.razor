@@ -1,0 +1,116 @@
+﻿@using VSI.Enums
+@using VSI.Services
+@inject ToastService ToastService
+@implements IDisposable
+
+<div class="cs-toast @(_isVisible ? "cs-toast-visible" : "cs-toast-invisible") @_backgroundCssClass">
+    <div class="cs-toast-icon">
+        <i class="fa fa-@_iconCssClass" aria-hidden="true"></i>
+    </div>
+    <div class="cs-toast-body">
+        <h5 class="@_headerCssClass">@_heading</h5>
+        <p class="@_messageCssClass">@((MarkupString)_message!)</p>
+    </div>
+    <button class="cs-toast-close" @onclick="HideToastClick"><i class="fas fa-times"></i></button>
+</div>
+
+@code {
+    private string? _heading;
+    private string? _message;
+    private bool _isVisible;
+    private string? _backgroundCssClass;
+    private string? _messageCssClass;
+    private string? _headerCssClass;
+    private string? _iconCssClass;
+
+    protected override void OnInitialized()
+    {
+        ToastService.OnShow += ShowToast;
+        ToastService.OnHide += HideToast;
+    }
+
+    private void ShowToast(string message, ToastLevel level)
+    {
+        this.ShowToast(message, level, string.Empty);
+    }
+
+    private void ShowToast(string message, ToastLevel level, string alternateHeading)
+    {
+        Console.WriteLine("[ToastComponent] HideToast - hiding toast");
+
+        // When ToastLevel = Error, add to the console!
+        if (level == ToastLevel.Error)
+        {
+            Console.WriteLine("Toast error: " + message);
+        }
+
+        BuildToastSettings(level, message, alternateHeading);
+        _isVisible = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HideToast()
+    {
+        _isVisible = false;
+        Console.WriteLine("[ToastComponent] HideToast - hiding toast");
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HideToastClick()
+    {
+        _isVisible = false;
+        Console.WriteLine("[ToastComponent] HideToastClick - hiding toast");
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void BuildToastSettings(ToastLevel level, string message, string alternateHeading)
+    {
+        switch (level)
+        {
+            case ToastLevel.Info:
+                _backgroundCssClass = $"bg-info";
+                _messageCssClass = $"text-white";
+                _headerCssClass = $"text-white";
+                _iconCssClass = "info";
+                _heading = "Info";
+                break;
+            case ToastLevel.Success:
+                _backgroundCssClass = $"bg-success";
+                _iconCssClass = "check";
+                _heading = "Success";
+                _headerCssClass = $"text-white";
+                _messageCssClass = $"text-white";
+                break;
+            case ToastLevel.Warning:
+                _backgroundCssClass = $"bg-warning";
+                _iconCssClass = "exclamation";
+                _heading = "Warning";
+                _headerCssClass = $"text-dark";
+                _messageCssClass = $"text-dark";
+                break;
+            case ToastLevel.Error:
+                _backgroundCssClass = "bg-red";
+                _messageCssClass = $"text-white";
+                _headerCssClass = $"text-white";
+                _iconCssClass = "times";
+                _heading = "Error";
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(level), level, null);
+        }
+
+        _message = message;
+
+        // Check if an alternate heading is provided
+        if (!string.IsNullOrWhiteSpace(alternateHeading))
+        {
+            _heading = alternateHeading;
+        }
+    }
+
+    void IDisposable.Dispose()
+    {
+        ToastService.OnShow -= ShowToast;
+        ToastService.OnHide -= HideToast;
+    }
+}
