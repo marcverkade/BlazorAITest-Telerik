@@ -6,6 +6,7 @@
 @using Telerik.FontIcons
 @using VSI.Enums
 @using VSI.Services
+@inject IJSRuntime JS
 @layout MainLayout
 
 <PageTitle>Custom Telerik Grid with navigation</PageTitle>
@@ -69,6 +70,56 @@
         </GridColumns>
     </TelerikGridWithNavigation> 
 
+    <script>
+
+        function SetFocusToFirstTextbox() {
+        console.log("Start SetFocusToFirstTextbox");
+
+        setTimeout(function () {
+            const inputs = document.querySelectorAll(
+                'input[type="text"]:not([disabled]):not([readonly]):not(.vsi-nofocus):not([hidden]), ' +
+                'input[role="textbox"]:not([disabled]):not([readonly]):not(.vsi-nofocus):not([hidden]), ' +
+                'input[role="spinbutton"]:not([disabled]):not([readonly]):not(.vsi-nofocus):not([hidden]), ' +
+                'textarea:not([disabled]):not([readonly]):not(.vsi-nofocus):not([hidden]), ' +
+                '.vsi-input.vsi-setfocus, ' +
+                '.vsi-input:not([disabled]):not([readonly]):not(.vsi-nofocus):not([hidden])'
+            );
+
+            for (const input of inputs) {
+                const isVisible = !!(input.offsetParent || input.getClientRects().length);
+
+                // Bepaal of het een Telerik filterinput is
+                const isInput = input.matches('input') || input.matches('textarea');
+                const isVSI = input.matches('.vsi-input');
+
+                // Alleen ID vereisen als het geen Telerik filter is
+                const hasId = input.id && input.id.trim().length > 0;
+
+                if (isVisible && (isInput || (hasId && isVSI))) {
+                    input.focus();
+                    console.log(`Focused input: ${hasId ? `with ID: ${input.id}` : 'Textbox without ID input'}`, input);
+
+                    if (input.matches('input[role="spinbutton"]')) {
+                        // Select all text of the input
+                        input.select();
+                    }
+
+                    return;
+                } else {
+                    const reasons = [];
+                    if (!isVisible) reasons.push("not visible");
+                    if (!hasId) reasons.push("no ID");
+                    if (!isInput) reasons.push("no input, textbox or textarea or vsi-input element");
+                    if (!isVSI) reasons.push("no vsi-input element");
+                    // console.log(`Skipped input (${reasons.join(", ")}):`, input);
+                }
+            }
+
+            console.warn("No suitable input found to focus.");
+        }, 200); // 200ms delay added
+    }
+    </script>
+
 @code {
 
     // Injected the message service for toast notifications
@@ -79,6 +130,18 @@
     private IList<Person> SelectedItems { get; set; } = new List<Person>();
     int PageSize { get; set; } = 25;
     protected List<int?> PageSizes { get; set; } = new List<int?> { 25, 50, 100, null };
+
+    // Other variables
+    private bool _focusSet = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_focusSet)
+        {
+            _focusSet = true;
+            await JS.InvokeVoidAsync("SetFocusToFirstTextbox");
+        }
+    }
 
     /// <summary>
     /// Handles the double click and the [ENTER] key press on a row in the grid.
