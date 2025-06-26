@@ -4,6 +4,8 @@ Sample application using Telerikcontrols and extending Telerik controls.
 Grid and extend with an extra property and add keyboard navigation.
 The name expects some AI tests but that is pending, first some Telerik controls and other handy stuff
 
+Download the solution and add your teleriklicense.txt file to the root of the solution, run and enjoy!
+
 ********
 Features
 ********
@@ -27,5 +29,5 @@ Technology used
 - Blazor Telerik UI
 - Javascript
 
-VSI Curacao - M. Verkade - June 2025
+VSI Curacao - M. Verkade - June 2025 - https://www.vsi.cw 
 See the Github repository https://github.com/marcverkade for more Blazor samples and the VSI Print Agent!
