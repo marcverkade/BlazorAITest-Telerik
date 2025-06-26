@@ -4,14 +4,14 @@
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Hello, Telerik Sample!</h1>
 
-Welcome to your new app.
-
+Welcome to a Telerik controls sample app.<br/>
+<br />
+@* Add telerik textbox and a button to show the values with a Telerik dialog *@
 <TelerikTextBox Placeholder="Enter text here..." @bind-Value="@textValue" />
-
 <CascadingValue Value="Dialogs">
-    <TelerikButton OnClick="ShowAlert">Show Alert with Text Value</TelerikButton>
+    <TelerikButton OnClick="ShowAlert">Show Telerik dialog with the TelerikTextbox Value</TelerikButton>
 </CascadingValue>
 
 @code {
@@ -22,6 +22,7 @@ Welcome to your new app.
 
     private async Task ShowAlert()
     {
+        // Telerik dialogs are used to show alerts, confirmations, and prompts.
         await Dialogs!.AlertAsync(textValue);
     }
 }

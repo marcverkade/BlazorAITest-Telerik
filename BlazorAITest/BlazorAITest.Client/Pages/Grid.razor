@@ -188,7 +188,7 @@
     /// </summary>
     public class Person
     {
-        public int Id { get; set; }
+        public string Id { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public int Age { get; set; }
         public string Email { get; set; } = string.Empty;
@@ -199,9 +199,9 @@
     /// </summary>
     public List<Person> TestData { get; set; } = new()
     {
-        new Person { Id = 1, Name = "Alice", Age = 30, Email = "alice@example.com" },
-        new Person { Id = 2, Name = "Bob", Age = 25, Email = "bob@example.com" },
-        new Person { Id = 3, Name = "Charlie", Age = 35, Email = "charlie@example.com" },
-        new Person { Id = 4, Name = "Diana", Age = 28, Email = "diana@example.com" }
+        new Person { Id = "1", Name = "Alice", Age = 30, Email = "alice@example.com" },
+        new Person { Id = "2", Name = "Bob", Age = 25, Email = "bob@example.com" },
+        new Person { Id = "3", Name = "Charlie", Age = 35, Email = "charlie@example.com" },
+        new Person { Id = "4", Name = "Diana", Age = 28, Email = "diana@example.com" }
     };
 }
